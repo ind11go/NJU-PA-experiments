@@ -20,6 +20,7 @@
 #include "sdb.h"
 #include <memory/vaddr.h>
 
+word_t expr(char *e, bool *success);
 static int is_batch_mode = false;
 
 void init_regex();
@@ -48,10 +49,25 @@ static int cmd_c(char *args) {
   return 0;
 }
 
-
 static int cmd_q(char *args) {
   nemu_state.state = NEMU_QUIT;
   return -1;
+}
+
+static int cmd_p(char *args){
+  if (args == NULL){
+    printf("Usage: p EXPR\n");
+    return 0;
+  }
+  bool success = true;
+  word_t res = expr(args, &success);
+
+  if(success){
+    printf("%u (0x%x)\n", res, res);
+  } else {
+    printf("Bad experssion\n");
+  }
+  return 0;
 }
 
 static int cmd_help(char *args);
@@ -99,15 +115,15 @@ static int cmd_x(char *args) {
   int n = 0;
   vaddr_t base_addr = 0;
 
-  // 完美适配 32 位类型的 sscanf
+  
   sscanf(arg1, "%d", &n);
   sscanf(arg2, "%x", &base_addr);
 
   for (int i = 0; i < n; i++) {
-    // 拼写修复：vaddr_read
+  
     uint32_t data = vaddr_read(base_addr, 4);
 
-    // 完美适配 32 位输出的 printf
+  
     printf("0x%08x: 0x%08x\n", base_addr, data);
 
     base_addr += 4;
@@ -126,6 +142,7 @@ static struct {
   { "si", "Single step execution.Usage：si[N]",cmd_si},
   { "info", "Print program state (info r for registers, info w for watchpoints)",cmd_info},
   { "x", "Scan memory. Usage: x N EXPR (e.g.,x 10 0x80000000)", cmd_x},
+  { "p", "Evaluate an experssion", cmd_p},
   /* TODO: Add more commands */
 };
 
