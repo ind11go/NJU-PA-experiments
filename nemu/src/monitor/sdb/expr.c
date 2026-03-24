@@ -22,7 +22,7 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ,
-
+  TK_NUM,
   /* TODO: Add more token types */
 
 };
@@ -37,7 +37,13 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
+  {"\\+", '+'},		// plus
+  {"\\-", '-'},
+  {"\\*", '*'},
+  {"\\/", '/'},
+  {"\\(", '('},
+  {"\\)", ')'},
+  {"[0-9]+", TK_NUM},  
   {"==", TK_EQ},        // equal
 };
 
@@ -95,7 +101,22 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-          default: TODO();
+	  case TK_NOTYPE:
+	    break;
+  	  case TK_NUM:
+	    if (substr_len > 31){
+	      printf("Error: Number is too long!\n");
+	      assert(0);
+	    }
+	    strncpy(tokens[nr_token].str, substr_start, substr_len);
+	    tokens[nr_token].str[substr_len] = '\0';
+	    tokens[nr_token].type = TK_NUM;
+	    nr_token++;
+	    break;
+          default: 
+	    tokens[nr_token].type = rules[i].token_type;
+	    nr_token++;
+	    break;
         }
 
         break;
@@ -109,6 +130,13 @@ static bool make_token(char *e) {
   }
 
   return true;
+  for(int i = 0; i < nr_token; i++){
+    if (tokens[i].type == TK_NUM){
+      printf("Token %d: type = TK_NUM, str = %s\n", i, tokens[i].str);
+    } else {
+      printf("Token %d: type = %c\n", i, tokens[i].type);
+    }
+  }
 }
 
 
