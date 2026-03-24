@@ -50,6 +50,7 @@ static int cmd_c(char *args) {
 
 
 static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
   return -1;
 }
 
@@ -81,33 +82,6 @@ static int cmd_info(char *args){
   return 0;
 }
 
-/*static int cmd_x(char *args){
-  if (args == NULL){
-    printf("Usage: x N EXPR\n");
-    return 0;
-  }
-
-  char *arg1 = strtok(args, " ");
-  char *arg2 = strtok(NULL, " ");
-
-  if(arg1 == NULL || arg2 == NULL){
-    printf("Usage: x N EXPR\n");
-    return 0;
-  }
-  
-  int n = 0;
-  vaddr_t base_addr = 0;
-  sscanf(arg1, "%d", &n);
-  sscanf(arg2, "%x", &base_addr);
-
-  for (int i = 0; i < n; i++){
-    uint32_t data = vaddr_read(base_addr, 4);
-    printf("0x%08x: 0x%08x\n", base_addr, data);
-    base_addr += 4;
-  }
-
-  return 0;
-}*/
 static int cmd_x(char *args) {
   if (args == NULL) {
     printf("Usage: x N EXPR\n");
