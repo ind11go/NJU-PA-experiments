@@ -22,7 +22,7 @@
 
 enum {
   TK_NOTYPE = 256, TK_EQ,
-  TK_NUM,
+  TK_NUM,TK_NEG,
   /* TODO: Add more token types */
 
 };
@@ -115,6 +115,8 @@ static int find_main_op(int p, int q){
       current_priority = 1;
     } else if (tokens[i].type == '*' || tokens[i].type == '/'){
       current_priority = 2;
+    } else if (tokens[i].type == TK_NEG){
+      current_priority = 3;
     } else {
       continue;
     }
@@ -137,6 +139,10 @@ word_t eval(int p, int q){
     return eval(p + 1, q - 1);
   } else {
     int op = find_main_op(p, q);
+    if (tokens[op].type == TK_NEG) {
+      word_t val = eval(op + 1, q);
+      return -val;
+    }
     word_t val1 = eval(p, op - 1);
     word_t val2 = eval(op + 1, q);
     switch (tokens[op].type){
@@ -201,7 +207,13 @@ static bool make_token(char *e) {
       return false;
     }
   }
-
+  for (int i = 0; i < nr_token; i++){
+    if (tokens[i].type == '-') {
+      if (i == 0 || (tokens[i-1].type != TK_NUM && tokens[i-1].type != ')')){
+        tokens[i].type = TK_NEG;
+      }
+    }
+  }
   return true;
   for(int i = 0; i < nr_token; i++){
     if (tokens[i].type == TK_NUM){
