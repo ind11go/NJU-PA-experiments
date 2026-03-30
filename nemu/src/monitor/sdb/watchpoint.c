@@ -20,13 +20,14 @@
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
-
-  /* TODO: Add more members if necessary */
+  char expr[256];
+  word_t old_val; 
 
 } WP;
 
 static WP wp_pool[NR_WP] = {};
 static WP *head = NULL, *free_ = NULL;
+static int next_no = 1;
 
 void init_wp_pool() {
   int i;
@@ -39,5 +40,83 @@ void init_wp_pool() {
   free_ = wp_pool;
 }
 
-/* TODO: Implement the functionality of watchpoint */
+WP* new_wp(){
+  if (free_ == NULL){
+    printf("Error: No free watchpoints available!\n");
+    assert(0);
+  }
+  WP *wp = free_;
+  free_ = free_->next;
+  wp->next = head;
+  head = wp;
+  wp->NO = next_no++;
+  wp->expr[0] = '\0';
+  wp->old_val = 0;
+  return wp;
+}
+void free_wp(WP *wp) {
+  if (wp == NULL || head == NULL) {
+    printf("Error: Try to free an invalid watchpoint!\n");
+    assert(0);
+  }
 
+  if (head == wp) {
+    head = head->next;
+  }
+  else {
+    WP *prev = head; 
+    while (prev->next != NULL && prev->next != wp) {
+      prev = prev->next;
+    }
+    if (prev->next == NULL) {
+      printf("Error: Watchpoint not found in the list!\n");
+      assert(0); 
+    }
+    prev->next = wp->next;
+  }
+
+  wp->next = free_;
+  free_ = wp;
+
+  wp->old_val = 0;
+  memset(wp->expr, 0, sizeof(wp->expr));
+}
+void info_wp(){
+  if (head == NULL){
+    printf("No watchpoints.\n");
+    return;
+  }
+  printf("%-8s\t%-16s\t%-16s\n", "Num", "Type", "What");
+  WP *p = head;
+  while (p != NULL){
+    printf("%-8d\t%-16s\t%-16s\n", p->NO, "watchpoint", p->expr);
+    p = p->next;
+  }
+}
+void add_watchpoint(char *args){
+  WP *wp = new_wp();
+  strcpy(wp->expr, args);
+  bool success;
+  wp->old_val = expr(args, &success);
+  if(!success){
+    printf("表达式求值失败！\n");
+    free_wp(wp);
+    return;
+  }
+  printf("成功设置监视点 %d: %s\n", wp->NO, wp->expr);
+}
+void delete_watchpoint(int no){
+  WP *p = head;
+  
+  while (p != NULL) {
+    if (p->NO == no) {
+      free_wp(p);
+      printf("Watchpoint %d deleted\n", no);
+      return; 
+    }
+    p = p->next;
+  }
+  printf("Watchpoint %d not found. Please check your watchpoint number using 'info w'.\n", no);
+
+
+}

@@ -81,6 +81,32 @@ static int cmd_si(char *args) {
  return 0;
 }
 
+static int cmd_w(char *args) {
+  if (args == NULL) {
+    printf("请提供表达式\n");
+    return 0;
+  }
+  add_watchpoint(args); 
+  return 0;
+}
+
+static int cmd_d(char *args) {
+  if (args == NULL) {
+    printf("Missing watchpoint number. Usage: d <NO>\n");
+    return 0;
+  }
+  
+  int no;
+  if (sscanf(args, "%d", &no) != 1) {
+    printf("Invalid argument. Usage: d <NO>\n");
+    return 0;
+  }
+  
+  delete_watchpoint(no);
+  
+  return 0;
+}
+
 static int cmd_info(char *args){
   if (args == NULL){
     printf("Missing parameter for 'info' command.Try 'info r' or 'info w'.\n");
@@ -90,7 +116,7 @@ static int cmd_info(char *args){
     isa_reg_display();
   }
   else if (strcmp(args, "w") == 0){
-  
+    info_wp(); 
   }
   else {
     printf("Unknown parameter: '%s'\n", args);
@@ -143,6 +169,8 @@ static struct {
   { "info", "Print program state (info r for registers, info w for watchpoints)",cmd_info},
   { "x", "Scan memory. Usage: x N EXPR (e.g.,x 10 0x80000000)", cmd_x},
   { "p", "Evaluate an experssion", cmd_p},
+  { "w", "Create a watchpoint", cmd_w},
+  { "d", "Delete a watchpoint", cmd_d},
   /* TODO: Add more commands */
 };
 
