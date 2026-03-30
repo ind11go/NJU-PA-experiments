@@ -120,3 +120,34 @@ void delete_watchpoint(int no){
 
 
 }
+bool check_watchpoint() {
+  if (head == NULL) {
+    return false; 
+  }
+
+  WP *p = head;
+  bool is_changed = false;
+
+  while (p != NULL) {
+    bool success = false;
+    word_t new_val = expr(p->expr, &success);
+
+    if (!success) {
+      printf("Error: Failed to evaluate expression '%s' during execution.\n", p->expr);
+      assert(0);
+    }
+
+    if (new_val != p->old_val) {
+      printf("\nHit watchpoint %d: %s\n", p->NO, p->expr);
+      printf("Old value = %u (0x%08x)\n", p->old_val, p->old_val);
+      printf("New value = %u (0x%08x)\n", new_val, new_val);
+
+      p->old_val = new_val;
+      is_changed = true;
+    }
+
+    p = p->next;
+  }
+
+  return is_changed; 
+}
