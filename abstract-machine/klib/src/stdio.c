@@ -78,51 +78,87 @@ int snprintf(char *out, size_t n, const char *fmt, ...) {
 
 int vsnprintf(char *out, size_t n, const char *fmt, va_list ap) {
   size_t out_idx = 0;
-    
-    for (const char *p = fmt; *p != '\0'; p++) {
-        if (*p != '%') {
+  const char *p = fmt;
+  while (*p) {
+    if (*p != '%') {
+        if (out_idx < n - 1) out[out_idx++] = *p;
+        p++;
+        continue;
+    }
+
+    p++; 
+
+    char pad_char = ' '; 
+    if (*p == '0') {
+        pad_char = '0';
+        p++;
+    }
+
+    int width = 0;
+    while (*p >= '0' && *p <= '9') {
+        width = width * 10 + (*p - '0');
+        p++;
+    }
+
+    switch (*p) {
+        case 'd': {
+            int val = va_arg(ap, int);
+            
+            if (val < 0) {
+                if (out_idx < n - 1) out[out_idx++] = '-';
+                val = -val; 
+            }
+
+            char num_buf[32];
+            int i = 0;
+            do {
+                num_buf[i++] = (val % 10) + '0';
+                val /= 10;
+            } while (val > 0);
+
+            while (i < width) {
+                if (out_idx < n - 1) out[out_idx++] = pad_char;
+                width--;
+            }
+
+            while (i > 0) {
+                if (out_idx < n - 1) out[out_idx++] = num_buf[--i];
+            }
+            break;
+        }
+
+        case 'c': {
+            char c = (char)va_arg(ap, int);
+            if (out_idx < n - 1) out[out_idx++] = c;
+            break;
+        }
+        case 'x': {
+            unsigned int val = va_arg(ap, unsigned int);
+            out_num(out, n, &out_idx, val, 16, 0); 
+            break;
+        }
+        case 's': {
+            char *str = va_arg(ap, char*);
+            if (!str) str = "(null)";
+            while (*str) {
+                if (out_idx < n - 1) out[out_idx++] = *str;
+                str++;
+            }
+            break;
+        }
+        default: {
             if (out_idx < n - 1) out[out_idx++] = *p;
-            continue;
-        }
-        
-        p++; 
-        switch (*p) {
-            case 'd': {
-                int val = va_arg(ap, int);
-                out_num(out, n, &out_idx, (unsigned int)val, 10, 1);
-                break;
-            }
-            case 's': {
-                const char *s = va_arg(ap, const char *);
-                if (s == NULL) s = "(null)";
-                while (*s != '\0') {
-                    if (out_idx < n - 1) out[out_idx++] = *s;
-                    s++;
-                }
-                break;
-            }
-            case 'c': {
-                char c = (char)va_arg(ap, int);  
-                if (out_idx < n - 1) out[out_idx++] = c;
-                break;
-            }
-            case 'x': {
-                unsigned int val = va_arg(ap, unsigned int);
-                out_num(out, n, &out_idx, val, 16, 0);
-                break;
-            }
-            default: {
-                if (out_idx < n - 1) out[out_idx++] = *p;
-                break;
-            }
+            break;
         }
     }
-    
-    if (n > 0) {
-        out[out_idx < n ? out_idx : n - 1] = '\0';
-    }
-    
-    return out_idx;
+    p++; 
+}
+
+if (n > 0) {
+    out[out_idx < n ? out_idx : n - 1] = '\0';
+}
+
+return out_idx;    
 }
 
 #endif
