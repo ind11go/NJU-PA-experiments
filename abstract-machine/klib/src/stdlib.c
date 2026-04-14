@@ -33,7 +33,7 @@ int atoi(const char* nptr) {
 
 void *malloc(size_t size) {
   if (hbrk == NULL) {
-    hbrk = (char *)heap.start;
+    hbrk = (void *)(((uintptr_t)heap.start + 7) & ~7); 
   }
 
   size = (size + 7) & ~7; 
