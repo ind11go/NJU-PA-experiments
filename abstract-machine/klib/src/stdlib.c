@@ -41,8 +41,10 @@ void *malloc(size_t size) {
   char *old_hbrk = hbrk;
   char *new_hbrk = hbrk + size;
 
+  
   if (new_hbrk > (char *)heap.end) {
-    return NULL; 
+    printf("\n[PANIC] Out of Memory! Heap exhausted!\n"); 
+    return NULL;
   }
 
   hbrk = new_hbrk;
