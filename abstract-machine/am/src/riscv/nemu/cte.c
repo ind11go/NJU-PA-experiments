@@ -14,6 +14,9 @@ Context* __am_irq_handle(Context *c) {
 
     c = user_handler(ev, c);
     assert(c != NULL);
+
+    // Advance mepc past the ecall instruction
+    c->mepc += 4;
   }
 
   return c;
