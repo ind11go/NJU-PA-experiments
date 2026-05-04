@@ -8,9 +8,11 @@
 #endif
 
 struct Context {
-  // TODO: fix the order of these members to match trap.S
-  uintptr_t mepc, mcause, gpr[NR_REGS], mstatus;
-  void *pdir;
+    uintptr_t gpr[NR_REGS];    // 偏移 0，对应栈上 sp + 0
+    uintptr_t mcause;          // 偏移 NR_REGS*4，对应 OFFSET_CAUSE
+    uintptr_t mstatus;         // 偏移 (NR_REGS+1)*4，对应 OFFSET_STATUS
+    uintptr_t mepc;            // 偏移 (NR_REGS+2)*4，对应 OFFSET_EPC
+    void *pdir;
 };
 
 #ifdef __riscv_e
