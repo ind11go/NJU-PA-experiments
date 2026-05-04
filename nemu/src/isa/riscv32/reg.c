@@ -39,7 +39,16 @@ word_t isa_reg_str2val(const char *s, bool *success) {
   for (int i = 0; i < 32; i++) {
     if (strcmp(s, regs[i]) == 0) {
       *success = true;
-      return cpu.gpr[i]; 
+      return cpu.gpr[i];
+    }
+  }
+
+  /* Support x0 - x31 format */
+  if (s[0] == 'x') {
+    int idx = atoi(s + 1);
+    if (idx >= 0 && idx < 32) {
+      *success = true;
+      return cpu.gpr[idx];
     }
   }
 

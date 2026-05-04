@@ -142,56 +142,75 @@ static int find_main_op(int p, int q){
   return op;
 }
 
-word_t eval(int p, int q){
+static bool eval_success = true;
+
+static word_t eval(int p, int q){
   if (p > q) {
-    assert(0);
+    printf("Error: Invalid expression (p > q)\n");
+    eval_success = false;
+    return 0;
   } else if (p == q){
     if (tokens[p].type == TK_NUM) {
-      int num;
-      sscanf(tokens[p].str, "%d", &num); 
+      unsigned num;
+      sscanf(tokens[p].str, "%u", &num);
       return num;
-    } 
+    }
     else if (tokens[p].type == TK_HEX) {
       uint32_t num;
-      sscanf(tokens[p].str, "%x", &num); 
+      sscanf(tokens[p].str, "%x", &num);
       return num;
     }
     else if (tokens[p].type == TK_REG) {
-      bool success = false;
-      word_t val = isa_reg_str2val(tokens[p].str + 1, &success);
-      if (!success) {
+      bool reg_success = false;
+      word_t val = isa_reg_str2val(tokens[p].str + 1, &reg_success);
+      if (!reg_success) {
         printf("Error: Unknown register '%s' at position %d\n", tokens[p].str, p);
-        assert(0);
+        eval_success = false;
+        return 0;
       }
       return val;
     }
-      else {
-      assert(0); 
+    else {
+      printf("Error: Unknown token type at position %d\n", p);
+      eval_success = false;
+      return 0;
     }
   } else if (check_parentheses(p, q) == true){
     return eval(p + 1, q - 1);
   } else {
     int op = find_main_op(p, q);
+    if (op == -1) {
+      printf("Error: No operator found in expression\n");
+      eval_success = false;
+      return 0;
+    }
     if (tokens[op].type == TK_NEG) {
       word_t val = eval(op + 1, q);
+      if (!eval_success) return 0;
       return -val;
     }
     else if (tokens[op].type == TK_DEREF) {
       vaddr_t addr = eval(op + 1, q);
+      if (!eval_success) return 0;
       return vaddr_read(addr, 4);
     }
     word_t val1 = eval(p, op - 1);
+    if (!eval_success) return 0;
     word_t val2 = eval(op + 1, q);
+    if (!eval_success) return 0;
     switch (tokens[op].type){
       case '+': return val1 + val2;
       case '-': return val1 - val2;
       case '*': return val1 * val2;
-      case '/': return val1 / val2;
+      case '/': return (val2 == 0) ? 0 : val1 / val2;
       case TK_EQ:  return val1 == val2;
       case TK_NEQ: return val1 != val2;
       case TK_AND: return val1 && val2;
       case TK_OR: return val1 || val2;
-      default: assert(0);
+      default:
+        printf("Error: Unknown operator type\n");
+        eval_success = false;
+        return 0;
     }
   }
 }
@@ -220,7 +239,10 @@ static bool make_token(char *e) {
   	  case TK_NUM:
       	  case TK_HEX:
       	  case TK_REG:
-          if (substr_len > 31) { assert(0); } 
+          if (substr_len > 31) {
+            printf("Error: Token too long (max 31 chars)\n");
+            return false;
+          } 
           strncpy(tokens[nr_token].str, substr_start, substr_len);
           tokens[nr_token].str[substr_len] = '\0';
           tokens[nr_token].type = rules[i].token_type;
@@ -269,6 +291,8 @@ word_t expr(char *e, bool *success) {
     *success = false;
     return 0;
   }
-  *success = true;
-  return eval(0, nr_token - 1);
+  eval_success = true;
+  word_t result = eval(0, nr_token - 1);
+  *success = eval_success;
+  return result;
 }

@@ -115,6 +115,84 @@ static int decode_exec(Decode *s) {
 
 
   INSTPAT("0000000 00001 00000 000 00000 11100 11", ebreak , N, NEMUTRAP(s->pc, R(10))); // R(10) is $a0
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, s->dnpc = isa_raise_intr(0xb, s->pc));
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , N,
+    s->dnpc = cpu.mepc;
+    uint32_t mpie = (cpu.mstatus >> 7) & 1;
+    cpu.mstatus = (cpu.mstatus & ~(1 << 3)) | (mpie << 3);  // MIE = MPIE
+    cpu.mstatus |= (1 << 7);  // MPIE = 1
+  );
+
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I,
+    word_t csr_addr = BITS(s->isa.inst, 31, 20);
+    word_t old_val = 0;
+    switch(csr_addr) {
+      case 0x300: old_val = cpu.mstatus; cpu.mstatus = src1; break;
+      case 0x305: old_val = cpu.mtvec;   cpu.mtvec   = src1; break;
+      case 0x341: old_val = cpu.mepc;    cpu.mepc    = src1; break;
+      case 0x342: old_val = cpu.mcause;  cpu.mcause  = src1; break;
+    }
+    R(rd) = old_val;
+  );
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I,
+    word_t csr_addr = BITS(s->isa.inst, 31, 20);
+    word_t old_val = 0;
+    switch(csr_addr) {
+      case 0x300: old_val = cpu.mstatus; if(src1 != 0) cpu.mstatus |= src1; break;
+      case 0x305: old_val = cpu.mtvec;   if(src1 != 0) cpu.mtvec   |= src1; break;
+      case 0x341: old_val = cpu.mepc;    if(src1 != 0) cpu.mepc    |= src1; break;
+      case 0x342: old_val = cpu.mcause;  if(src1 != 0) cpu.mcause  |= src1; break;
+    }
+    R(rd) = old_val;
+  );
+  INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc  , I,
+    word_t csr_addr = BITS(s->isa.inst, 31, 20);
+    word_t old_val = 0;
+    switch(csr_addr) {
+      case 0x300: old_val = cpu.mstatus; if(src1 != 0) cpu.mstatus &= ~src1; break;
+      case 0x305: old_val = cpu.mtvec;   if(src1 != 0) cpu.mtvec   &= ~src1; break;
+      case 0x341: old_val = cpu.mepc;    if(src1 != 0) cpu.mepc    &= ~src1; break;
+      case 0x342: old_val = cpu.mcause;  if(src1 != 0) cpu.mcause  &= ~src1; break;
+    }
+    R(rd) = old_val;
+  );
+  INSTPAT("??????? ????? ????? 101 ????? 11100 11", csrrwi , I,
+    word_t csr_addr = BITS(s->isa.inst, 31, 20);
+    word_t zimm = BITS(s->isa.inst, 19, 15);
+    word_t old_val = 0;
+    switch(csr_addr) {
+      case 0x300: old_val = cpu.mstatus; cpu.mstatus = zimm; break;
+      case 0x305: old_val = cpu.mtvec;   cpu.mtvec   = zimm; break;
+      case 0x341: old_val = cpu.mepc;    cpu.mepc    = zimm; break;
+      case 0x342: old_val = cpu.mcause;  cpu.mcause  = zimm; break;
+    }
+    R(rd) = old_val;
+  );
+  INSTPAT("??????? ????? ????? 110 ????? 11100 11", csrrsi , I,
+    word_t csr_addr = BITS(s->isa.inst, 31, 20);
+    word_t zimm = BITS(s->isa.inst, 19, 15);
+    word_t old_val = 0;
+    switch(csr_addr) {
+      case 0x300: old_val = cpu.mstatus; if(zimm != 0) cpu.mstatus |= zimm; break;
+      case 0x305: old_val = cpu.mtvec;   if(zimm != 0) cpu.mtvec   |= zimm; break;
+      case 0x341: old_val = cpu.mepc;    if(zimm != 0) cpu.mepc    |= zimm; break;
+      case 0x342: old_val = cpu.mcause;  if(zimm != 0) cpu.mcause  |= zimm; break;
+    }
+    R(rd) = old_val;
+  );
+  INSTPAT("??????? ????? ????? 111 ????? 11100 11", csrrci , I,
+    word_t csr_addr = BITS(s->isa.inst, 31, 20);
+    word_t zimm = BITS(s->isa.inst, 19, 15);
+    word_t old_val = 0;
+    switch(csr_addr) {
+      case 0x300: old_val = cpu.mstatus; if(zimm != 0) cpu.mstatus &= ~zimm; break;
+      case 0x305: old_val = cpu.mtvec;   if(zimm != 0) cpu.mtvec   &= ~zimm; break;
+      case 0x341: old_val = cpu.mepc;    if(zimm != 0) cpu.mepc    &= ~zimm; break;
+      case 0x342: old_val = cpu.mcause;  if(zimm != 0) cpu.mcause  &= ~zimm; break;
+    }
+    R(rd) = old_val;
+  );
+
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
 

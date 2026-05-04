@@ -43,7 +43,7 @@ void init_wp_pool() {
 WP* new_wp(){
   if (free_ == NULL){
     printf("Error: No free watchpoints available!\n");
-    assert(0);
+    return NULL;
   }
   WP *wp = free_;
   free_ = free_->next;
@@ -57,20 +57,20 @@ WP* new_wp(){
 void free_wp(WP *wp) {
   if (wp == NULL || head == NULL) {
     printf("Error: Try to free an invalid watchpoint!\n");
-    assert(0);
+    return;
   }
 
   if (head == wp) {
     head = head->next;
   }
   else {
-    WP *prev = head; 
+    WP *prev = head;
     while (prev->next != NULL && prev->next != wp) {
       prev = prev->next;
     }
     if (prev->next == NULL) {
       printf("Error: Watchpoint not found in the list!\n");
-      assert(0); 
+      return;
     }
     prev->next = wp->next;
   }
@@ -95,6 +95,10 @@ void info_wp(){
 }
 void add_watchpoint(char *args){
   WP *wp = new_wp();
+  if (wp == NULL) {
+    printf("Failed to create watchpoint: no free slots\n");
+    return;
+  }
   strcpy(wp->expr, args);
   bool success;
   wp->old_val = expr(args, &success);
@@ -134,7 +138,8 @@ bool check_watchpoint() {
 
     if (!success) {
       printf("Error: Failed to evaluate expression '%s' during execution.\n", p->expr);
-      assert(0);
+      p = p->next;
+      continue;
     }
 
     if (new_val != p->old_val) {

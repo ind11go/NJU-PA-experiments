@@ -16,11 +16,18 @@
 #include <isa.h>
 
 word_t isa_raise_intr(word_t NO, vaddr_t epc) {
-  /* TODO: Trigger an interrupt/exception with ``NO''.
-   * Then return the address of the interrupt/exception vector.
-   */
+  /* Save the return address and exception code. */
+  cpu.mepc = epc;
+  cpu.mcause = NO;
 
-  return 0;
+  /* Update mstatus: save MIE to MPIE, then clear MIE. */
+  /* mstatus.MPIE is bit 7, mstatus.MIE is bit 3 */
+  uint32_t mie = (cpu.mstatus >> 3) & 1;
+  cpu.mstatus = (cpu.mstatus & ~(1 << 7)) | (mie << 7);  // MPIE = MIE
+  cpu.mstatus &= ~(1 << 3);                               // MIE = 0
+
+  /* Return the trap vector base address. */
+  return cpu.mtvec;
 }
 
 word_t isa_query_intr() {

@@ -32,6 +32,12 @@ static void restart() {
 
   /* The zero register is always 0. */
   cpu.gpr[0] = 0;
+
+  /* Initialize CSR registers. */
+  cpu.mstatus = 0;
+  cpu.mtvec = 0;
+  cpu.mepc = 0;
+  cpu.mcause = 0;
 }
 
 void init_isa() {

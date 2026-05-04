@@ -141,17 +141,18 @@ static int cmd_x(char *args) {
   int n = 0;
   vaddr_t base_addr = 0;
 
-  
   sscanf(arg1, "%d", &n);
-  sscanf(arg2, "%x", &base_addr);
+
+  bool success = true;
+  base_addr = expr(arg2, &success);
+  if (!success) {
+    printf("Bad expression: %s\n", arg2);
+    return 0;
+  }
 
   for (int i = 0; i < n; i++) {
-  
     uint32_t data = vaddr_read(base_addr, 4);
-
-  
     printf("0x%08x: 0x%08x\n", base_addr, data);
-
     base_addr += 4;
   }
 
