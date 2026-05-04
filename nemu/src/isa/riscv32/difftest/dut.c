@@ -26,8 +26,8 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
       success = false;
     }
   }
-  if (ref_r->pc != pc) {
-    printf("Diff at pc: ref = 0x%08x, dut = 0x%08x\n", ref_r->pc, pc);
+  if (ref_r->pc != cpu.pc) {
+    printf("Diff at pc: ref = 0x%08x, dut = 0x%08x\n", ref_r->pc, cpu.pc);
     success = false;
   }
   return success;
