@@ -34,7 +34,7 @@ static void restart() {
   cpu.gpr[0] = 0;
 
   /* Initialize CSR registers. */
-  cpu.mstatus = 0;
+  cpu.mstatus = 0x1800;  // MPP = M-mode
   cpu.mtvec = 0;
   cpu.mepc = 0;
   cpu.mcause = 0;
